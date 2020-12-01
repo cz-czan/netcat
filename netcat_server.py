@@ -2,7 +2,8 @@ import sys
 import socket
 import getopt
 import subprocess
-
+import traceback
+import logging
 debug = True
 bind_ip = ""
 bind_port = 0
@@ -52,19 +53,17 @@ except getopt.GetoptError as err:
 
 bind_full_addr = socket.getaddrinfo(bind_ip, bind_port)[0][4]
 
+
+
+
 server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 server.bind(bind_full_addr)
 server.listen(5)
 print("waiting for connection...")
 client, addr = server.accept()
 send(client, "<#CMD:>".encode('utf-8'))
-def main():
-    print("waiting for client input")
-    client_buffer = receive(client, 512)
-    print("client input received")
-    print(client_buffer)
-    print("<#client:>" + client_buffer.decode('utf-8'), end='')
 
+def execute(client_buffer):
     process = subprocess.Popen(client_buffer.decode('utf-8').split(), stdout = subprocess.PIPE) # Creating a process
     #print("PROCESS CREATED") # debug
     while True: # Reading and sending the stdout from the process in realtime
@@ -89,6 +88,20 @@ def main():
                     #print("RESENDING DATA")
                 else:
                     break
+    
+
+def main():
+    print("waiting for client input")
+    client_buffer = receive(client, 512)
+    print("client input received")
+    print(client_buffer)
+    print("<#client:>" + client_buffer.decode('utf-8'), end='')
+
+    try:
+        execute(client_buffer)
+    except Exception as e:
+        send(client, e.encode('utf-8'))
+
 
 
             
