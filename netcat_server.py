@@ -64,30 +64,47 @@ client, addr = server.accept()
 send(client, "<#CMD:>".encode('utf-8'))
 
 def execute(client_buffer):
-    process = subprocess.Popen(client_buffer.decode('utf-8').split(), stdout = subprocess.PIPE) # Creating a process
-    #print("PROCESS CREATED") # debug
-    while True: # Reading and sending the stdout from the process in realtime
-        shell_output = process.stdout.readline() # Read a line from stdout
-        return_code = process.poll()
+    try:
+        process = subprocess.Popen(client_buffer.decode('utf-8').split(), stdout = subprocess.PIPE) # Creating a process
+        while True: # Reading and sending the stdout from the process in realtime
+            shell_output = process.stdout.readline() # Read a line from stdout
+            return_code = process.poll()
+            print(shell_output)
+            print(return_code)
+            if shell_output.decode('utf-8') == '' and return_code is not None: 
+                #print("Process execution complete. Sending netcat shell prefix")
+                send(client, "<#CMD:>".encode('utf-8'))
+                break
+            elif shell_output: 
+                #print("Process execution incomplete.")
+                send(client, int_to_bytes(2)) 
+                #print("Response code 2 sent to client")
+                send(client, shell_output)
+                #print("Shell output sent to client")
+                while True: 
+                    response =  receive(client, 16)
+                    if (bytes_to_int(response) != 1):
+                        send(client, shell_output) 
+                        #print("RESENDING DATA")
+                    else:
+                        break
+    except Exception as e:
+        print("ełłoł")
+        
+        shell_output = str(e) + "\n" # Read a line from stdout
+        return_code = 0
         print(shell_output)
         print(return_code)
-        if shell_output.decode('utf-8') == '' and return_code is not None: 
-            #print("Process execution complete. Sending netcat shell prefix")
-            send(client, "<#CMD:>".encode('utf-8'))
-            break
-        elif shell_output: 
-            #print("Process execution incomplete.")
-            send(client, int_to_bytes(2)) 
-            #print("Response code 2 sent to client")
-            send(client, shell_output)
-            #print("Shell output sent to client")
-            while True: 
-                response =  receive(client, 16)
-                if (bytes_to_int(response) != 1):
-                    send(client, shell_output) 
-                    #print("RESENDING DATA")
-                else:
-                    break
+        send(client, int_to_bytes(2)) 
+        send(client, shell_output.encode('utf-8'))
+        while True: 
+            response =  receive(client, 16)
+            if (bytes_to_int(response) != 1):
+                send(client, shell_output) 
+            else:
+                break
+
+        send(client, "<#CMD:>".encode('utf-8'))
     
 
 def main():
@@ -97,11 +114,11 @@ def main():
     print(client_buffer)
     print("<#client:>" + client_buffer.decode('utf-8'), end='')
 
-    try:
-        execute(client_buffer)
-    except Exception as e:
-        send(client, e.encode('utf-8'))
-
+    #try:
+    execute(client_buffer)
+    #except Exception as e:
+        #send(client, str(e).encode('utf-8'))
+        #print(str(e))
 
 
             
