@@ -6,16 +6,20 @@ from utils import *
 server_address = ""
 server_port = 0
 
-
-
+file_path = ""
+c_opts = ""
 try:
-    opts, args = getopt.getopt(sys.argv[1:],"t:p:",["target","port"])
+    opts, args = getopt.getopt(sys.argv[1:], "t:p:cu:", ["target", "port", "command", "upload"])
 
     for o, v in opts: # o - option; v - value
         if o in ("-t", "--target"):
             server_address = v
         if o in ("-p", "--port"):
             server_port = int(v)
+        if o in ("-u", "--upload"):
+            file_path = v
+            c_opts += "u"
+
 except getopt.GetoptError as err:
     print(str(err))
 
@@ -24,7 +28,22 @@ s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 print("Connecting with " + str(server_address) + " on port " + str(server_port))
 print(s.connect((server_address, server_port)))
 print("Connection established")
-print(receive(s, 1024).decode('utf-8'), end='', flush=True) # Waiting for the console prefix ( 16 bytes max ) and printing
+send(s, c_opts.encode('utf-8'))
+
+if "u" in c_opts:
+    file = open(file_path, "rb")
+    data = file.read()
+
+    # send filename
+    send(s, os.path.basename(file_path).encode('utf-8'))
+    # send file content
+    send(s, data)
+
+    s.close()
+    sys.exit()
+
+# Waiting for the commandline prefix ( 16 bytes max ) and printing
+print(receive(s, 1024).decode('utf-8'), end='', flush=True)
 def main():
     for n, line in enumerate(sys.stdin):
         if(len(line) < 2):

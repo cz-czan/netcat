@@ -1,15 +1,17 @@
-import sys
-import os
 import socket
 import getopt
 import subprocess
 from utils import *
 import getpass
+import sys
+
 
 debug = True
 bind_ip = ""
 bind_port = 0
 
+command = False
+upload = False
 try:
     opts, args = getopt.getopt(sys.argv[1:], "t:p:", ["target", "port"])
 
@@ -18,19 +20,30 @@ try:
             bind_ip = a
         elif o in ("-p", "--port"):
             bind_port = a
+
+
 except getopt.GetoptError as err:
     print(str(err))
 
 bind_full_addr = socket.getaddrinfo(bind_ip, bind_port)[0][4]
-
-
-
-
 server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 server.bind(bind_full_addr)
 server.listen(5)
 print("Awaiting connection...")
 client, addr = server.accept()
+print("Connection established with " + addr[0])
+
+c_opts = receive(client, 64).decode("utf-8")
+if "u" in c_opts:
+    filename = receive(client, 256).decode('utf-8')
+    data = receive(client, 16384)
+    file = open(filename, "wb")
+    file.write(data)
+    file.close()
+    print("File transfer successful")
+    client.close()
+    sys.exit()
+
 send(client, ("<#" + color.user + getpass.getuser() + color.endc + "@" + color.dir + cwd() + color.endc + ">").encode('utf-8'))
 
 def execute(client_buffer):
