@@ -1,4 +1,4 @@
-A netcat tool written in python3, meant for usage on Linux. Currently features remote shell and file transfer. WIP. Linux-HaikuOS ( and vice versa ) compatibility, AES encryption and server multi-threading coming soon
+A "netcat" ( somehwat misleading name, since it provides different base functionality than the UNIX netcat does ) tool written in python3, meant for usage on Linux. Currently features a very basic remote shell and file transfer. WIP. Linux-HaikuOS ( and vice versa ) compatibility, AES encryption and server multi-threading coming soon
 
 # USAGE
 ![(usage gif)](https://i.imgur.com/fmzZc3E.gif)
